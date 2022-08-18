@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:quizzler/quiz_brain.dart';
-
-QuizBrain quizBrain = QuizBrain();
+import 'package:rflutter_alert/rflutter_alert.dart';
 
 void main() {
   runApp(Quizzler());
 }
+
+QuizBrain quizBrain = QuizBrain();
 
 class Quizzler extends StatelessWidget {
   const Quizzler({Key? key}) : super(key: key);
@@ -15,7 +16,7 @@ class Quizzler extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         backgroundColor: Colors.grey.shade900,
-        body: SafeArea(
+        body: const SafeArea(
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10.0),
             child: QuizPage(),
@@ -36,7 +37,40 @@ class QuizPage extends StatefulWidget {
 class _QuizPageState extends State<QuizPage> {
   List<Icon> scoreKeeper = [];
 
-  int questionNumber = 0;
+  void checkAnswer(bool userPickedAnswer) {
+    bool correctAnswer = quizBrain.getQuestionAnswer();
+    setState(() {
+      if (correctAnswer == userPickedAnswer) {
+        scoreKeeper.add(const Icon(Icons.check, color: Colors.green));
+      } else {
+        scoreKeeper.add(const Icon(Icons.close, color: Colors.red));
+      }
+      var nextQuestion = quizBrain.nextQuestion();
+      if (!nextQuestion) {
+        Alert(
+          context: context,
+          type: AlertType.success,
+          title: "Finished!",
+          desc: "End of quiz.",
+          buttons: [
+            DialogButton(
+              child: Text(
+                "Ok",
+                style: TextStyle(color: Colors.white, fontSize: 20),
+              ),
+              onPressed: () {
+                print("ok");
+                Navigator.pop(context);
+              },
+              width: 120,
+            )
+          ],
+        ).show();
+        scoreKeeper.clear();
+        quizBrain.reset();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +81,7 @@ class _QuizPageState extends State<QuizPage> {
             flex: 5,
             child: Center(
               child: Text(
-                quizBrain.questionBank[questionNumber].questionText,
+                quizBrain.getQuestionText(),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 27.0,
@@ -61,20 +95,7 @@ class _QuizPageState extends State<QuizPage> {
               padding: const EdgeInsets.all(10.0),
               child: FlatButton(
                 onPressed: () {
-                  bool correctAnswer =
-                      quizBrain.questionBank[questionNumber].questionAnswer;
-                  setState(() {
-                    questionNumber++;
-                    if (correctAnswer == true) {
-                      print('User got it right!');
-                      scoreKeeper
-                          .add(const Icon(Icons.check, color: Colors.green));
-                    } else {
-                      print('User got it wrong!');
-                      scoreKeeper
-                          .add(const Icon(Icons.close, color: Colors.red));
-                    }
-                  });
+                  checkAnswer(true);
                 },
                 color: Colors.green,
                 child: const Text('True',
@@ -90,22 +111,7 @@ class _QuizPageState extends State<QuizPage> {
               padding: const EdgeInsets.all(10.0),
               child: FlatButton(
                 onPressed: () {
-                  bool correctAnswer =
-                      quizBrain.questionBank[questionNumber].questionAnswer;
-                  print(questionNumber);
-                  print(correctAnswer);
-                  setState(() {
-                    questionNumber++;
-                    if (correctAnswer == false) {
-                      print('User got it right!');
-                      scoreKeeper
-                          .add(const Icon(Icons.check, color: Colors.green));
-                    } else {
-                      print('User got it wrong!');
-                      scoreKeeper
-                          .add(const Icon(Icons.close, color: Colors.red));
-                    }
-                  });
+                  checkAnswer(false);
                 },
                 color: Colors.red,
                 child: const Text('False',
